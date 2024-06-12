@@ -10,16 +10,13 @@ package main
 
 import (
 	"database/sql"
-	"encoding/hex"
-	"flag"
-	"hash/adler32"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/banderveloper/fileCloneSearcher/internal/database"
 	"github.com/banderveloper/fileCloneSearcher/internal/entity"
+	"github.com/banderveloper/fileCloneSearcher/internal/lib"
 
 	_ "modernc.org/sqlite"
 )
@@ -67,70 +64,14 @@ func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.F
 		}
 
 		quotaCh <- struct{}{}
-		go setCheckSum(entity, quotaCh, filesDataCh)
+		go lib.SetCheckSum(entity, quotaCh, filesDataCh)
 	}
-}
-
-// fill file checksum for given file
-// after calculating - send done fileData to channel
-// function needs to file fd.Hash and fd.Handled fields
-func setCheckSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh chan<- *entity.FileData) {
-
-	// open current file
-	// if error - send file with Handled:false and empty checksum
-	// and release quota
-	file, err := os.Open(fd.AbsPath)
-	if err != nil {
-		//log.Printf("Error during opening file %s\n", fe.absPath)
-		fileEntitiesCh <- fd
-		<-quotaCh
-		return
-	}
-
-	defer file.Close()
-
-	hash := adler32.New()
-
-	if _, err := io.Copy(hash, file); err != nil {
-		//log.Printf("Error copying file content of %s\n", fe.absPath)
-		fileEntitiesCh <- fd
-		<-quotaCh
-		return
-	}
-
-	// dont calculate checksum of empty file
-	if fd.Size > 0 {
-		checksum := hash.Sum(nil)
-		fd.Hash = hex.EncodeToString(checksum)
-	}
-
-	fd.Handled = true
-	fileEntitiesCh <- fd
-	<-quotaCh
 }
 
 func main() {
 
-	// Define flags
-
-	// start path
-	var rootPath string
-	flag.StringVar(&rootPath, "path", ".", "Path to start directory")
-
-	// limit of goroutines calculating checksum
-	var workersLimit int
-	flag.IntVar(&workersLimit, "workers", 1, "Limit of checksum calculating goroutines")
-
-	// connection string to database
-	var connString string
-	flag.StringVar(&connString, "db", "files.db", "Connection string to database")
-
-	// wheter show found duplicates
-	var showResult bool
-	flag.BoolVar(&showResult, "show", false, "Show result (duplicates names and count)")
-
-	// Parse the flags
-	flag.Parse()
+	// Get run flags
+	rootPath, workersLimit, connString, _ := lib.GetFlagValues()
 
 	// channel with filled files data
 	filesDataCh := make(chan *entity.FileData, workersLimit)
@@ -156,6 +97,8 @@ func main() {
 
 	// start recursively analyzing file system
 	analyzeDir(rootPath, quotaCh, filesDataCh)
+
+	close(quotaCh)
 
 	// save accumulated files info to db
 	err = repos.Commit()
