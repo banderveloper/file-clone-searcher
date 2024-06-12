@@ -11,6 +11,7 @@ package main
 import (
 	"database/sql"
 	"encoding/hex"
+	"flag"
 	"hash/adler32"
 	"io"
 	"log"
@@ -110,10 +111,26 @@ func setCheckSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh chan
 
 func main() {
 
-	// limit of goroutines calculating checksum
-	workersLimit := 3
+	// Define flags
+
 	// start path
-	rootPath := "/home/nikita"
+	var rootPath string
+	flag.StringVar(&rootPath, "path", ".", "Path to start directory")
+
+	// limit of goroutines calculating checksum
+	var workersLimit int
+	flag.IntVar(&workersLimit, "workers", 1, "Limit of checksum calculating goroutines")
+
+	// connection string to database
+	var connString string
+	flag.StringVar(&connString, "db", "files.db", "Connection string to database")
+
+	// wheter show found duplicates
+	var showResult bool
+	flag.BoolVar(&showResult, "show", false, "Show result (duplicates names and count)")
+
+	// Parse the flags
+	flag.Parse()
 
 	// channel with filled files data
 	filesDataCh := make(chan *entity.FileData, workersLimit)
@@ -121,7 +138,7 @@ func main() {
 	quotaCh := make(chan struct{}, workersLimit)
 
 	// connect and initialize db
-	db, err := sql.Open("sqlite", "files.db")
+	db, err := sql.Open("sqlite", connString)
 	if err != nil {
 		panic(err)
 	}
