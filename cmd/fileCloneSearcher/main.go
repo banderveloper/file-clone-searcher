@@ -17,14 +17,16 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/banderveloper/goFileCloneSearcher/internal/database"
-	"github.com/banderveloper/goFileCloneSearcher/internal/entity"
+	"github.com/banderveloper/fileCloneSearcher/internal/database"
+	"github.com/banderveloper/fileCloneSearcher/internal/entity"
 
 	_ "modernc.org/sqlite"
 )
 
+// Recursively get folder's nested items - files and folders
 func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.FileData) {
 
+	// get info about current folder
 	curDir, err := os.Open(path)
 	if err != nil {
 		//log.Printf("Error during opening directory %s\n", path)
@@ -33,6 +35,7 @@ func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.F
 
 	defer curDir.Close()
 
+	// folded files and folders
 	foldedItems, err := curDir.Readdir(0)
 	if err != nil {
 		//log.Printf("Error during getting folded items in directory %s\n", foldedItems)
@@ -43,29 +46,38 @@ func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.F
 
 		curDir.Chdir()
 
+		// if its folded directory - recursively deep into it
 		if folded.IsDir() {
 			analyzeDir(folded.Name(), quotaCh, filesDataCh)
 			continue
 		}
 
+		// if its file - get absolute path
 		absPath, err := filepath.Abs(folded.Name())
 		if err != nil {
 			//log.Printf("Error during getting abs path of file %s/%s\n", path, folded.Name())
 			continue
 		}
 
+		// fill some data about this file, and if quota is available, start goroutine for calculating checksum
 		entity := &entity.FileData{
 			AbsPath: absPath,
 			Size:    folded.Size(),
 		}
 
 		quotaCh <- struct{}{}
-		go setControlSum(entity, quotaCh, filesDataCh)
+		go setCheckSum(entity, quotaCh, filesDataCh)
 	}
 }
 
-func setControlSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh chan<- *entity.FileData) {
+// fill file checksum for given file
+// after calculating - send done fileData to channel
+// function needs to file fd.Hash and fd.Handled fields
+func setCheckSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh chan<- *entity.FileData) {
 
+	// open current file
+	// if error - send file with Handled:false and empty checksum
+	// and release quota
 	file, err := os.Open(fd.AbsPath)
 	if err != nil {
 		//log.Printf("Error during opening file %s\n", fe.absPath)
@@ -85,6 +97,7 @@ func setControlSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh ch
 		return
 	}
 
+	// dont calculate checksum of empty file
 	if fd.Size > 0 {
 		checksum := hash.Sum(nil)
 		fd.Hash = hex.EncodeToString(checksum)
@@ -97,6 +110,17 @@ func setControlSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh ch
 
 func main() {
 
+	// limit of goroutines calculating checksum
+	workersLimit := 3
+	// start path
+	rootPath := "/home/nikita"
+
+	// channel with filled files data
+	filesDataCh := make(chan *entity.FileData, workersLimit)
+	// quota channel for limiting checksum goroutines
+	quotaCh := make(chan struct{}, workersLimit)
+
+	// connect and initialize db
 	db, err := sql.Open("sqlite", "files.db")
 	if err != nil {
 		panic(err)
@@ -104,20 +128,19 @@ func main() {
 	repos := database.NewSqliteRepository(db)
 	repos.EnsureTableCreated()
 
-	workersLimit := 3
-	rootPath := "/home/nikita/Documents"
-
-	filesDataCh := make(chan *entity.FileData, workersLimit)
-	quotaCh := make(chan struct{}, workersLimit)
-
+	// goroutine for reading channel with done files data and saving it to inmemory
 	go func() {
 		for fd := range filesDataCh {
-			repos.AddFileData(fd)
+			if fd.Handled {
+				repos.AddFileData(fd)
+			}
 		}
 	}()
 
+	// start recursively analyzing file system
 	analyzeDir(rootPath, quotaCh, filesDataCh)
 
+	// save accumulated files info to db
 	err = repos.Commit()
 	if err != nil {
 		panic(err)

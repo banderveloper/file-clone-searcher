@@ -7,9 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/banderveloper/goFileCloneSearcher/internal/entity"
+	"github.com/banderveloper/fileCloneSearcher/internal/entity"
 )
 
+// child of Repository struct
 type SqliteRepository struct {
 	db    *sql.DB
 	files []*entity.FileData
@@ -19,6 +20,7 @@ func NewSqliteRepository(db *sql.DB) Repository {
 	return &SqliteRepository{db: db}
 }
 
+// create table if not exists
 func (r *SqliteRepository) EnsureTableCreated() error {
 
 	query := `CREATE TABLE IF NOT EXISTS files (
@@ -32,10 +34,12 @@ func (r *SqliteRepository) EnsureTableCreated() error {
 	return err
 }
 
+// add file data to inmemory store
 func (r *SqliteRepository) AddFileData(fd *entity.FileData) {
 	r.files = append(r.files, fd)
 }
 
+// send all accumulated files data to db
 func (r *SqliteRepository) Commit() error {
 
 	if len(r.files) == 0 {
@@ -47,12 +51,14 @@ func (r *SqliteRepository) Commit() error {
 
 	for _, fd := range r.files {
 
+		// fd has absolute path, take only last part from path with filename and extension
 		pathParts := strings.Split(fd.AbsPath, string(os.PathSeparator))
 		fileName := pathParts[len(pathParts)-1]
 
 		buffer.WriteString(fmt.Sprintf("('%s', %d, '%s'), ", fileName, fd.Size, fd.Hash))
 	}
 
+	// trim last comma and space
 	query := buffer.String()
 	query = strings.TrimRight(query, ", ")
 
