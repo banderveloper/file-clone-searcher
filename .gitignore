@@ -1,0 +1,76 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Go module files
+go.sum
+
+# Test binaries
+*.test
+
+# Vendor directory
+/vendor/
+
+# Dependency directories (remove the comment if you have these directories)
+# /Godeps/
+# /_workspace/
+
+# IDE/editor directories and files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Log files
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VS Code specific settings
+.history/
+.vscode/
+*.code-workspace
+
+# Local env files
+.env
+
+# Temporary files
+tmp/
+temp/
+
+# Go build cache
+/go-build/
+
+# Coverage reports
+coverage.txt
+coverage.html
+*.cov
+
+# Go binaries
+bin/
+
+# If you use macOS
+*.DS_Store
+
+# If you use Windows
+Thumbs.db
+ehthumbs.db
+
+# Database files
+*.db
+
