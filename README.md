@@ -21,7 +21,7 @@ Application recursively search all files in given folder, and starts quota-limit
 ### Compiled binary
 - Go to [repository releases](https://github.com/banderveloper/file-clone-searcher/releases)
 - Download last release
-- Execute ```./searcher [FLAGS]```  or  ```.\searcher.exe [FLAGS]```
+- Execute ```./searcher_linuxamd64 [FLAGS]```  or  ```.\searcher_windowsamd64.exe [FLAGS]```
 
 ### Flags
 Utility accepts launch flags. Get information about available flags using --help launch flag 
