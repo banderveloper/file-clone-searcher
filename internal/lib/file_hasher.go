@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/banderveloper/fileCloneSearcher/internal/entity"
+	"github.com/banderveloper/file-clone-searcher/internal/entity"
 )
 
 // fill file checksum for given file
