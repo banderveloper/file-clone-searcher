@@ -1,4 +1,4 @@
-module github.com/banderveloper/fileCloneSearcher
+module github.com/banderveloper/file-clone-searcher
 
 go 1.22.4
 

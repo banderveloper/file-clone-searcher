@@ -16,9 +16,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/banderveloper/fileCloneSearcher/internal/database"
-	"github.com/banderveloper/fileCloneSearcher/internal/entity"
-	"github.com/banderveloper/fileCloneSearcher/internal/lib"
+	"github.com/banderveloper/file-clone-searcher/internal/database"
+	"github.com/banderveloper/file-clone-searcher/internal/entity"
+	"github.com/banderveloper/file-clone-searcher/internal/lib"
 
 	_ "modernc.org/sqlite"
 )

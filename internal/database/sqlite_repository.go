@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/banderveloper/fileCloneSearcher/internal/entity"
+	"github.com/banderveloper/file-clone-searcher/internal/entity"
 )
 
 // child of Repository struct
