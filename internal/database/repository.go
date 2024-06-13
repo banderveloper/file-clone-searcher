@@ -1,6 +1,6 @@
 package database
 
-import "github.com/banderveloper/fileCloneSearcher/internal/entity"
+import "github.com/banderveloper/file-clone-searcher/internal/entity"
 
 type Repository interface {
 	// create table if not exists
