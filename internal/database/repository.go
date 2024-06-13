@@ -4,7 +4,7 @@ import "github.com/banderveloper/fileCloneSearcher/internal/entity"
 
 type Repository interface {
 	// create table if not exists
-	EnsureTableCreated() error
+	EnsureTableCreated(overwrite bool) error
 
 	// add file data to inmemory store
 	AddFileData(fd *entity.FileData)

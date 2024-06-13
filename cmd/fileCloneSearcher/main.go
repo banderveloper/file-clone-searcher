@@ -73,7 +73,7 @@ func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.F
 func main() {
 
 	// Get run flags
-	rootPath, workersLimit, connString, showResult := lib.GetFlagValues()
+	rootPath, workersLimit, connString, showResult, overwrite := lib.GetFlagValues()
 
 	// channel with filled files data
 	filesDataCh := make(chan *entity.FileData, workersLimit)
@@ -86,7 +86,7 @@ func main() {
 		panic(err)
 	}
 	repos := database.NewSqliteRepository(db)
-	repos.EnsureTableCreated()
+	repos.EnsureTableCreated(overwrite)
 
 	// goroutine for reading channel with done files data and saving it to inmemory
 	go func() {

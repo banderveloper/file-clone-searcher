@@ -21,17 +21,28 @@ func NewSqliteRepository(db *sql.DB) Repository {
 }
 
 // create table if not exists
-func (r *SqliteRepository) EnsureTableCreated() error {
+func (r *SqliteRepository) EnsureTableCreated(overwrite bool) error {
 
-	query := `CREATE TABLE IF NOT EXISTS files (
+	_, err := r.db.Exec(`CREATE TABLE IF NOT EXISTS files (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT,
 		size INTEGER,
-		hash TEXT);`
+		hash TEXT);`)
 
-	_, err := r.db.Exec(query)
+	if err != nil {
+		return err
+	}
 
-	return err
+	// if --overwrite flag is not set, clear existing table
+	if overwrite {
+
+		_, err := r.db.Exec("DELETE FROM files")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // add file data to inmemory store
