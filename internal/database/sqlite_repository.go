@@ -27,7 +27,7 @@ func (r *SqliteRepository) EnsureTableCreated() error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT,
 		size INTEGER,
-		hash TEXT); TRUNCATE TABLE files;`
+		hash TEXT);`
 
 	_, err := r.db.Exec(query)
 
@@ -72,6 +72,7 @@ func (r *SqliteRepository) GetDuplicates() ([]*entity.CloneData, error) {
 
 	duplicates := make([]*entity.CloneData, 0)
 
+	// query for get duplicates of files by name, size and hash
 	query := `SELECT name, size, hash, count(*) AS count 
 		FROM files
 		GROUP BY name, size, hash

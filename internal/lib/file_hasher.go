@@ -34,7 +34,7 @@ func SetCheckSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh chan
 		return
 	}
 
-	// dont calculate checksum of empty file
+	// calculate checksum only for non-empty files
 	if fd.Size > 0 {
 		checksum := hasher.Sum(nil)
 		fd.Hash = hex.EncodeToString(checksum)
