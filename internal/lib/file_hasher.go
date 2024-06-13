@@ -12,7 +12,11 @@ import (
 // fill file checksum for given file
 // after calculating - send done fileData to channel
 // function needs to file fd.Hash and fd.Handled fields
-func SetCheckSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh chan<- *entity.FileData) {
+
+// fd - file data, that must be filled with calculated checksum and true/false succeed
+// quotaCh - limiter for goroutines count, cell releases after calculating checksum
+// filesDataCh - channel for inserting files data with calculated checksum
+func SetCheckSum(fd *entity.FileData, quotaCh chan struct{}, filesDataCh chan<- *entity.FileData) {
 
 	// open current file
 	// if error - send file with Handled:false and empty checksum
@@ -44,6 +48,7 @@ func SetCheckSum(fd *entity.FileData, quotaCh chan struct{}, fileEntitiesCh chan
 	}
 
 	fd.Handled = true
-	fileEntitiesCh <- fd
+	// send done file to channel and release quota
+	filesDataCh <- fd
 	<-quotaCh
 }

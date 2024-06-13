@@ -2,6 +2,7 @@ package lib
 
 import "flag"
 
+// default flags values if they are not set during launch
 const (
 	defaultRootPath     = "."
 	defaultWorkersLimit = 1
@@ -9,6 +10,7 @@ const (
 	defaultShowResult   = false
 )
 
+// get and return flags from launch arguments
 func GetFlagValues() (rootPath string, workersLimit int, connString string, showResult bool) {
 
 	// path to start directory

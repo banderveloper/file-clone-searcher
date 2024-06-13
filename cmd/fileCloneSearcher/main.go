@@ -24,12 +24,14 @@ import (
 )
 
 // Recursively get folder's nested items - files and folders
+// path - folder path to analyze
+// quotaCh - channel for limiting one-time checksum goroutines count
+// filesDataCh - channel for inserting files with calculated checksum (chan is passed to checksum method)
 func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.FileData) {
 
 	// get info about current folder
 	curDir, err := os.Open(path)
 	if err != nil {
-		//log.Printf("Error during opening directory %s\n", path)
 		return
 	}
 
@@ -38,7 +40,6 @@ func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.F
 	// folded files and folders
 	foldedItems, err := curDir.Readdir(0)
 	if err != nil {
-		//log.Printf("Error during getting folded items in directory %s\n", foldedItems)
 		return
 	}
 
@@ -55,7 +56,6 @@ func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.F
 		// if its file - get absolute path
 		absPath, err := filepath.Abs(folded.Name())
 		if err != nil {
-			//log.Printf("Error during getting abs path of file %s/%s\n", path, folded.Name())
 			continue
 		}
 
