@@ -27,7 +27,7 @@ func (r *SqliteRepository) EnsureTableCreated() error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT,
 		size INTEGER,
-		hash TEXT);`
+		hash TEXT); TRUNCATE TABLE files;`
 
 	_, err := r.db.Exec(query)
 
@@ -65,4 +65,30 @@ func (r *SqliteRepository) Commit() error {
 	_, err := r.db.Exec(query)
 
 	return err
+}
+
+// Discover and get duplicated files from commited data
+func (r *SqliteRepository) GetDuplicates() ([]*entity.CloneData, error) {
+
+	duplicates := make([]*entity.CloneData, 0)
+
+	query := `SELECT name, size, hash, count(*) AS count 
+		FROM files
+		GROUP BY name, size, hash
+		HAVING count > 1
+		ORDER BY count DESC`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+
+		var dupl = &entity.CloneData{}
+		rows.Scan(&dupl.Name, &dupl.Size, &dupl.Hash, &dupl.Count)
+		duplicates = append(duplicates, dupl)
+	}
+
+	return duplicates, nil
 }

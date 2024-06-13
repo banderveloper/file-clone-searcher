@@ -10,9 +10,11 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/banderveloper/fileCloneSearcher/internal/database"
 	"github.com/banderveloper/fileCloneSearcher/internal/entity"
@@ -71,7 +73,7 @@ func analyzeDir(path string, quotaCh chan struct{}, filesDataCh chan<- *entity.F
 func main() {
 
 	// Get run flags
-	rootPath, workersLimit, connString, _ := lib.GetFlagValues()
+	rootPath, workersLimit, connString, showResult := lib.GetFlagValues()
 
 	// channel with filled files data
 	filesDataCh := make(chan *entity.FileData, workersLimit)
@@ -88,9 +90,18 @@ func main() {
 
 	// goroutine for reading channel with done files data and saving it to inmemory
 	go func() {
-		for fd := range filesDataCh {
-			if fd.Handled {
-				repos.AddFileData(fd)
+		for {
+			select {
+
+			// if it is file data in channel - add it to inmemory
+			case fd := <-filesDataCh:
+				if fd.Handled {
+					repos.AddFileData(fd)
+				}
+
+			// if chan is empty - wait 10 nanoseconds (prevents deadlock)
+			case <-time.After(time.Nanosecond * 10):
+
 			}
 		}
 	}()
@@ -98,12 +109,26 @@ func main() {
 	// start recursively analyzing file system
 	analyzeDir(rootPath, quotaCh, filesDataCh)
 
+	// close quota channel after scanning all folders
 	close(quotaCh)
 
 	// save accumulated files info to db
 	err = repos.Commit()
 	if err != nil {
 		panic(err)
+	}
+
+	// if --show flag is set, show duplicates files in terminal
+	if showResult {
+
+		duplicates, err := repos.GetDuplicates()
+		if err != nil {
+			panic(err)
+		}
+
+		for _, dupl := range duplicates {
+			fmt.Println(dupl.ToString())
+		}
 	}
 
 	log.Println("Done!")

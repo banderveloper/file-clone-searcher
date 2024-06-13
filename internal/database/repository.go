@@ -11,4 +11,7 @@ type Repository interface {
 
 	// send all accumulated files data to db
 	Commit() error
+
+	// Discover and get duplicated files from commited data
+	GetDuplicates() ([]*entity.CloneData, error)
 }
