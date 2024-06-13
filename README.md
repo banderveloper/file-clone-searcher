@@ -14,14 +14,16 @@ Application recursively search all files in given folder, and starts quota-limit
 ## How to run
 
 ### Non-compiled .go file
-- Ensure having installed [go compiler](https://go.dev/dl/)
-- Clone repository ```git clone https://github.com/banderveloper/file-clone-searcher```
-- Execute ```go run cmd/searcher/main.go [FLAGS]```
+1. Ensure having installed [go compiler](https://go.dev/dl/)
+2. Clone repository ```git clone https://github.com/banderveloper/file-clone-searcher```
+3. Open app folder ```cd file-clone-searcher```
+4. Restore dependencies ```go mod tidy```
+5. Execute ```go run cmd/searcher/main.go [FLAGS]```
 
 ### Compiled binary
-- Go to [repository releases](https://github.com/banderveloper/file-clone-searcher/releases)
-- Download last release
-- Execute ```./searcher_linuxamd64 [FLAGS]```  or  ```.\searcher_windowsamd64.exe [FLAGS]```
+1. Go to [repository releases](https://github.com/banderveloper/file-clone-searcher/releases)
+2. Download last release
+3. Execute ```./searcher_linuxamd64 [FLAGS]```  or  ```.\searcher_windowsamd64.exe [FLAGS]```
 
 ### Flags
 Utility accepts launch flags. Get information about available flags using --help launch flag 
